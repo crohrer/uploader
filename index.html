@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+
+<title>Uploader</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Bootstrap -->
+<link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+<link href="css/uploader.css" rel="stylesheet" media="screen">
+
+<script type="text/javascript" src="http://bp.yahooapis.com/2.4.21/browserplus-min.js"></script>
+<script type="text/javascript" src="js/plupload.js"></script>
+<script type="text/javascript" src="js/plupload.gears.js"></script>
+<script type="text/javascript" src="js/plupload.silverlight.js"></script>
+<script type="text/javascript" src="js/plupload.flash.js"></script>
+<script type="text/javascript" src="js/plupload.browserplus.js"></script>
+<script type="text/javascript" src="js/plupload.html4.js"></script>
+<script type="text/javascript" src="js/plupload.html5.js"></script>
+
+</head>
+<body>
+
+<div class="navbar navbar-inverse navbar-fixed-top">
+	<div class="navbar-inner">
+		<div class="container">
+			<a class="brand">Uploader</a>
+		</div>
+	</div>
+</div>
+<header class="jumbotron subhead">
+  <div class="container">
+    <h1>Please upload your files here.</h1>
+		<p>Thank you.</p>
+  </div>
+</header>
+
+<div class="container">
+	<div class="row">
+		<hr>
+		<div class="span12">
+			<div id="filecontainer">
+			    <div id="filelist">Error!</div>
+			    <br />
+			    <br />
+			    <div id="progress" class="progress-striped active">
+					<div id="bar" style="width: 0%;"></div>
+				</div>
+			    <a id="pickfiles" href="javascript:;" class="btn btn-large">Choose Files</a> 
+			    <a id="uploadfiles" href="javascript:;" class="btn btn-large btn-primary disabled">Upload Files</a>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script type="text/javascript">
+$(function() {
+	var uploader = new plupload.Uploader({
+		runtimes : 'gears,html5,flash,silverlight,browserplus',
+		browse_button : 'pickfiles',
+		container : 'filecontainer',
+		max_file_size : '10mb',
+		url : 'upload.php',
+		flash_swf_url : '/plupload/js/plupload.flash.swf',
+		silverlight_xap_url : '/plupload/js/plupload.silverlight.xap',
+		filters : [
+			{title : "Image files", extensions : "jpg,gif,png"},
+			{title : "Zip files", extensions : "zip"}
+		],
+		resize : {width : 320, height : 240, quality : 90}
+	});
+
+	uploader.bind('Init', function(up, params) {
+		$('#filelist').html("<div></div>");
+	});
+
+	$('#uploadfiles').click(function(e) {
+		uploader.start();
+		e.preventDefault();
+	});
+
+	uploader.init();
+
+	uploader.bind('FilesAdded', function(up, files) {
+		$.each(files, function(i, file) {
+			$('#filelist').append(
+				'<div id="' + file.id + '">' +
+				file.name + ' (' + plupload.formatSize(file.size) + ') <b class="label label-info"></b>' +
+			'</div>');
+		});
+		$('#uploadfiles').removeClass('disabled');
+		$(".alert").alert('close');
+
+		up.refresh(); // Reposition Flash/Silverlight
+	});
+
+	uploader.bind('BeforeUpload', function(up){
+		$('#progress').addClass('progress active progress-striped');
+		$('#progress').removeClass('progress-success');
+		$('#bar').addClass('bar');
+	});
+
+	uploader.bind('UploadProgress', function(up, file) {
+		$('#' + file.id + " b").html(file.percent + "%");
+		$('#bar').css('width', uploader.total.percent + "%");
+	});
+
+	uploader.bind('UploadComplete', function(up){
+		$('#progress').removeClass('active progress-striped');
+		$('#progress').addClass('progress-success');
+		$('#filecontainer').append('<div class="alert alert-success"><button type="button" class="close" data-dismiss="alert">×</button><strong>Thanks!</strong> Your files were uploaded successfully.</div>');
+	});
+
+	uploader.bind('Error', function(up, err) {
+		$('#filelist').append('<div>Error: ' + err.code +
+			", Message: " + err.message +
+			(err.file ? ", File: " + err.file.name : "") +
+			' <span class="badge badge-important">!</span></div>'
+		);
+
+		up.refresh(); // Reposition Flash/Silverlight
+	});
+
+	uploader.bind('FileUploaded', function(up, file) {
+		$('#' + file.id + " b").html("100%");
+		$('#' + file.id + " b").removeClass('label-info');
+		$('#' + file.id + " b").addClass('label-success');
+	});
+});
+</script>
+
+</body>
+</html>
